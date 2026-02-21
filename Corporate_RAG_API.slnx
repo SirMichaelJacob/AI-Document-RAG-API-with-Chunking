@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="RAG_Doc.API/RAG_Doc.API.csproj" />
+  <Project Path="RAG_Doc.Application/RAG_Doc.Application.csproj" />
+  <Project Path="RAG_Doc.Domain/RAG_Doc.Domain.csproj" />
+  <Project Path="RAG_Doc.Infrastructure/RAG_Doc.Infrastructure.csproj" />
+</Solution>
