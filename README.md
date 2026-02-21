@@ -73,7 +73,7 @@ Instead of relying on model memory, the system uses **your documents as external
 | Embeddings       | Nomic Embed                    |
 | Document Parsing | PdfPig + OpenXML               |
 | Vector Storage   | Database (Your implementation) |
-| API Testing      | Swagger                        |
+| API Testing      | Swagger /Postman               |
 
 ---
 
