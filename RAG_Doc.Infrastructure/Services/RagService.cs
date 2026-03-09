@@ -25,7 +25,6 @@ namespace RAG_Doc.Infrastructure.Services
 
         private FaissNet.Index _index;
         private List<Guid> _idMap = new();
-        private readonly SemaphoreSlim _indexLock = new(1, 1);
 
         public RagService(
             IUnitOfWork unitOfWork,
@@ -39,7 +38,6 @@ namespace RAG_Doc.Infrastructure.Services
             _llmClient = llmClient;
             _settings = settings.Value;
             _cache = cache;
-
             InitializeIndexAsync().GetAwaiter().GetResult();
         }
 
@@ -99,21 +97,21 @@ namespace RAG_Doc.Infrastructure.Services
             if (_index == null || _idMap.Count == 0)
                 return new List<string>();
 
-            // 1️⃣ Normalize query embedding
+            // 1️ Normalize query embedding
             var normalizedQuery = Utility.Normalize(queryEmbedding);
 
-            // 2️⃣ Search FAISS index
+            // 2️ Search FAISS index
             var (distances, ids) = _index.Search(new[] { normalizedQuery }, topK);
 
-            // 3️⃣ Filter invalid FAISS results (-1)
+            // 3️ Filter invalid FAISS results (-1)
             var internalIds = ids[0].Where(id => id >= 0).Take(topK).ToList();
             if (!internalIds.Any())
                 return new List<string>();
 
-            // 4️⃣ Map FAISS internal IDs to chunk GUIDs
+            // 4️ Map FAISS internal IDs to chunk GUIDs
             var chunkIds = internalIds.Select(id => _idMap[(int)id]).ToList();
 
-            // 5️⃣ Retrieve text from DB in same order
+            // 5️ Retrieve text from DB in same order
             return await _unitOfWork.Document.GetChunkContentsByIdsAsync(chunkIds);
         }
 

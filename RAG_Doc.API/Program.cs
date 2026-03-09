@@ -8,17 +8,41 @@ using RAG_Doc.Infrastructure.Services;
 using Wolverine;
 using Wolverine.EntityFrameworkCore;
 using Wolverine.FluentValidation;
+using InfisicalConfiguration;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var projectId = builder.Configuration["Infisical:ProjectId"];
+var clientId = builder.Configuration["Infisical:ClientId"];
+var env = "dev"; //
+var clientSecret = builder.Configuration["Infisical:ClientSecret"];
+
+var auth = new InfisicalAuthBuilder().SetUniversalAuth(clientId, clientSecret).Build();
+
+builder.Configuration
+    .AddInfisical(
+        new InfisicalConfigBuilder()
+            .SetInfisicalUrl("https://eu.infisical.com")
+            .SetProjectId(projectId)
+            .SetEnvironment(env)       // e.g. "dev", "prod"            
+            .SetSecretPath("/")
+            .SetAuth(auth)
+            .Build()
+
+    );
+
+
 // Add services to the container.
-builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DocHubConn")));
+var conn = builder.Configuration["ConnectionKey"];
+builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(conn));
 builder.Services.AddMemoryCache();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IRagService, RagService>();
 
 builder.Services.Configure<LlmSettings>(builder.Configuration.GetSection("LLMS"));
+
+
 
 // Register HttpClient for EmbeddingService 
 builder.Services.AddHttpClient<EmbeddingService>(client =>

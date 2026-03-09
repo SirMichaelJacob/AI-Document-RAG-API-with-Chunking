@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RAG_Doc.Application.DTOs;
@@ -17,14 +18,17 @@ namespace RAG_Doc.Infrastructure.Services
         private readonly LlmSettings _settings;
         private int? _embeddingDimension;
         private readonly string _endPointUrl;
+        public readonly IConfiguration _configuration;
 
 
-        public EmbeddingService( HttpClient httpClient, IOptions<LlmSettings> settings)
+
+        public EmbeddingService( HttpClient httpClient, IOptions<LlmSettings> settings, IConfiguration configuration)
         {
             _httpClient = httpClient;
             _settings = settings.Value;
             _httpClient.BaseAddress = new Uri(_settings.EndPointUrl);
             _httpClient.Timeout = new TimeSpan(0, 0, _settings.TimeoutSeconds);
+            _configuration = configuration;
         }
 
         public async Task<float[]> GenerateEmbeddingAsync(string text,CancellationToken cancellationToken = default)
@@ -32,7 +36,7 @@ namespace RAG_Doc.Infrastructure.Services
             var request = new
             {
                 input = text,
-                model = _settings.EmbeddingModel
+                model = _configuration["EmbeddingModel"] ?? _settings.EmbeddingModel
             };
 
             string jsonContent = JsonConvert.SerializeObject(request);

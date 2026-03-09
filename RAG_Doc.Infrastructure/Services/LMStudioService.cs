@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using RAG_Doc.Application.DTOs;
 using RAG_Doc.Domain.Interfaces;
@@ -16,17 +17,24 @@ namespace RAG_Doc.Infrastructure.Services
         private readonly HttpClient _httpClient;
         private readonly LlmSettings _settings;
         private readonly string _endPointUrl;
+        public readonly IConfiguration _configuration;
 
         public LMStudioService(
             HttpClient httpClient,
-            IOptions<LlmSettings> settings)
+            IOptions<LlmSettings> settings, IConfiguration configuration)
         {
             _httpClient = httpClient;
             _settings = settings.Value;
+            _configuration = configuration;
         }
 
         public async Task<string> GenerateAsync(string prompt,int maxTokens = 500,CancellationToken cancellationToken = default)
         {
+            string llm_model = _configuration["LLMModel"];
+            double? parsedTemperature = double.TryParse(_configuration["Temperature"], out double temperature) ? temperature : (double?)null;
+
+            double finalTemperature = parsedTemperature ?? _settings.Temperature;
+
             var request = new
             {
                 messages = new[]
@@ -42,8 +50,8 @@ namespace RAG_Doc.Infrastructure.Services
                     content = prompt
                 }
             },
-                model = _settings.LLMModel,
-                temperature = _settings.Temperature,
+                model = llm_model ?? _settings.LLMModel,
+                temperature = finalTemperature,
                 max_tokens = maxTokens,
                 stream = false
             };
